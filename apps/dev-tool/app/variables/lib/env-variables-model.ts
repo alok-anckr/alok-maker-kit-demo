@@ -551,7 +551,7 @@ export const envVariables: EnvVariableModel[] = [
   {
     name: 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
     description: 'Your Stripe publishable key.',
-    hint: `Ex. pk_test_123456789012345678901234`,
+    hint: `Ex. pk_test_YOUR_STRIPE_PUBLISHABLE_KEY_HERE`,
     category: 'Billing',
     type: 'string',
     contextualValidation: {
@@ -596,7 +596,7 @@ export const envVariables: EnvVariableModel[] = [
     name: 'STRIPE_SECRET_KEY',
     description: 'Your Stripe secret key.',
     category: 'Billing',
-    hint: `Ex. sk_test_123456789012345678901234`,
+    hint: `Ex. sk_test_YOUR_STRIPE_SECRET_KEY_HERE`,
     secret: true,
     type: 'string',
     contextualValidation: {
