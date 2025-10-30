@@ -65,7 +65,8 @@
     "dashboard": "Dashboard",
     "settings": "Settings",
     "profile": "Profile",
-    "application": "Application"
+    "application": "Application",
+    "inventoryChat": "Inventory Chat"
   },
   "roles": {
     "owner": {

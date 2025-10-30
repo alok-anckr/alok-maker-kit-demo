@@ -64,6 +64,7 @@
     "next": "16.0.0",
     "next-sitemap": "^4.2.3",
     "next-themes": "0.4.6",
+    "openai": "^6.7.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-hook-form": "^7.65.0",
@@ -71,6 +72,7 @@
     "recharts": "2.15.3",
     "tailwind-merge": "^3.3.1",
     "urlpattern-polyfill": "^10.1.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.25.74"
   },
   "devDependencies": {

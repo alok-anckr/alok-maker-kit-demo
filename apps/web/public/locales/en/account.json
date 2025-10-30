@@ -4,6 +4,10 @@
   "homePage": "Home",
   "billingTab": "Billing",
   "settingsTab": "Settings",
+  "inventoryChat": {
+    "pageTitle": "Inventory Chat",
+    "description": "Manage QuickBooks Desktop inventory using natural language"
+  },
   "multiFactorAuth": "Multi-Factor Authentication",
   "multiFactorAuthDescription": "Set up Multi-Factor Authentication method to further secure your account",
   "updateProfileSuccess": "Profile successfully updated",

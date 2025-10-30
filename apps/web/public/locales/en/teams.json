@@ -2,6 +2,9 @@
   "home": {
     "pageTitle": "Home"
   },
+  "inventoryChat": {
+    "pageTitle": "Inventory Chat"
+  },
   "settings": {
     "pageTitle": "Settings",
     "pageDescription": "Manage your Team details",

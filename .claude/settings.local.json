@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.conductor.is)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm --filter web add:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm --filter web typecheck:*)",
+      "Bash(timeout 120 pnpm typecheck:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm --filter web supabase status:*)",
+      "WebSearch"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
