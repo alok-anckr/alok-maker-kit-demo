@@ -111,7 +111,9 @@ export const GetInventoryItemSchema = z.object({
  */
 export const CreateInventoryAdjustmentSchema = z.object({
   accountId: z.string().min(1, 'Adjustment account ID is required'),
-  transactionDate: z.string().optional(),
+  transactionDate: z
+    .string()
+    .regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/u, 'Transaction date must be in YYYY-MM-DD format'),
   referenceNumber: z.string().optional(),
   memo: z.string().optional(),
   lines: z.array(

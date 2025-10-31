@@ -1,4 +1,5 @@
 import { ServerDataLoader } from '@makerkit/data-loader-supabase-nextjs';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { AdminAccountsTable } from '@kit/admin/components/admin-accounts-table';
 import { AdminCreateUserDialog } from '@kit/admin/components/admin-create-user-dialog';
@@ -24,6 +25,12 @@ export const metadata = {
 
 async function AccountsPage(props: AdminAccountsPageProps) {
   const client = getSupabaseServerClient();
+  // The data loader still targets the older Supabase PostgREST typings, so cast for compatibility.
+  const loaderClient = client as unknown as SupabaseClient<
+    Record<string, unknown>,
+    'public',
+    'public'
+  >;
   const searchParams = await props.searchParams;
   const page = searchParams.page ? parseInt(searchParams.page) : 1;
 
@@ -40,7 +47,7 @@ async function AccountsPage(props: AdminAccountsPageProps) {
       <PageBody>
         <ServerDataLoader
           table={'accounts'}
-          client={client}
+          client={loaderClient}
           page={page}
           where={(queryBuilder) => {
             const { account_type: type, query } = searchParams;

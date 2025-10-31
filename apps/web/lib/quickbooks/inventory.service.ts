@@ -1,6 +1,7 @@
 import 'server-only';
 
 import Conductor from 'conductor-node';
+import type { AccountListParams } from 'conductor-node/resources/qbd/accounts';
 
 import { getLogger } from '@kit/shared/logger';
 
@@ -248,9 +249,12 @@ class InventoryService {
     logger.info(ctx, 'Creating inventory adjustment in QuickBooks Desktop...');
 
     try {
+      const { transactionDate, ...adjustment } = params.adjustment;
+
       const response = await this.conductor.qbd.inventoryAdjustments.create({
         conductorEndUserId: params.endUserId,
-        ...params.adjustment,
+        transactionDate,
+        ...adjustment,
       });
 
       logger.info(
@@ -272,7 +276,7 @@ class InventoryService {
   async listAccounts(params: {
     endUserId: string;
     limit?: number;
-    type?: string;
+    accountType?: AccountListParams['accountType'];
   }) {
     const logger = await getLogger();
 
@@ -287,7 +291,7 @@ class InventoryService {
       const response = await this.conductor.qbd.accounts.list({
         conductorEndUserId: params.endUserId,
         limit: params.limit || 100,
-        type: params.type as any,
+        accountType: params.accountType,
       });
 
       logger.info(
