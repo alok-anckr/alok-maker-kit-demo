@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Send, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@kit/ui/button';
@@ -37,6 +37,8 @@ export function ChatInputForm({ onSubmit, isLoading }: ChatInputFormProps) {
       message: '',
     },
   });
+
+  const messageValue = useWatch({ control: form.control, name: 'message' });
 
   const handleSubmit = async (data: ChatInputFormData) => {
     const message = data.message || (selectedFile ? `Upload Excel file: ${selectedFile.name}` : '');
@@ -166,7 +168,7 @@ export function ChatInputForm({ onSubmit, isLoading }: ChatInputFormProps) {
             <Button
               type="submit"
               size="icon"
-              disabled={isLoading || (!form.watch('message') && !selectedFile)}
+              disabled={isLoading || (!messageValue && !selectedFile)}
               className="h-[60px] w-[60px]"
               data-test="chat-send-button"
               title="Send message"

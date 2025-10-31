@@ -2,6 +2,7 @@ import 'server-only';
 
 import Conductor from 'conductor-node';
 import type { AccountListParams } from 'conductor-node/resources/qbd/accounts';
+import type { InventoryItem } from 'conductor-node/resources/qbd/inventory-items';
 
 import { getLogger } from '@kit/shared/logger';
 
@@ -40,7 +41,7 @@ class InventoryService {
     endUserId: string;
     filters?: Partial<ListInventoryItemsInput>;
     fetchAll?: boolean;
-  }) {
+  }): Promise<InventoryItemsListResult> {
     const logger = await getLogger();
 
     const ctx = {
@@ -53,7 +54,7 @@ class InventoryService {
     try {
       // If fetchAll is true, recursively fetch all pages
       if (params.fetchAll) {
-        const allItems: any[] = [];
+        const allItems: InventoryItem[] = [];
         let cursor: string | undefined = params.filters?.cursor;
         let hasMore = true;
 
@@ -75,7 +76,7 @@ class InventoryService {
             classIds: params.filters?.classIds,
           });
 
-          allItems.push(...(page.data || []));
+          allItems.push(...(page.data ?? []));
           cursor = page.nextCursor ?? undefined;
           hasMore = !!cursor;
 
@@ -120,8 +121,8 @@ class InventoryService {
       );
 
       return {
-        data: page.data,
-        nextCursor: page.nextCursor,
+        data: page.data ?? [],
+        nextCursor: page.nextCursor ?? undefined,
       };
     } catch (error) {
       logger.error({ ...ctx, error }, 'Failed to fetch inventory items');
@@ -311,6 +312,11 @@ class InventoryService {
  * Factory function to create a new Inventory service instance
  * @returns InventoryService instance
  */
+export type InventoryItemsListResult = {
+  data: InventoryItem[];
+  nextCursor?: string;
+};
+
 export function createInventoryService() {
   return new InventoryService();
 }

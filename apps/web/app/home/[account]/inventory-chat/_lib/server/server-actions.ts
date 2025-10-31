@@ -1,16 +1,49 @@
 'use server';
 
+import type { Account } from 'conductor-node/resources/qbd/accounts';
+import type { InventoryItem } from 'conductor-node/resources/qbd/inventory-items';
+
 import { enhanceAction } from '@kit/next/actions';
 import { z } from 'zod';
 
 import { createExcelService } from '~/lib/quickbooks/excel.service';
-import { createInventoryService } from '~/lib/quickbooks/inventory.service';
+import {
+  createInventoryService,
+  type InventoryItemsListResult,
+} from '~/lib/quickbooks/inventory.service';
 import {
   CreateInventoryItemSchema,
   UpdateInventoryItemSchema,
   CreateInventoryAdjustmentSchema,
 } from '~/lib/quickbooks/inventory-schemas';
 import { createOpenAIService } from '~/lib/quickbooks/openai.service';
+
+const relevantAccountTypes: ReadonlyArray<Account['accountType']> = [
+  'income',
+  'cost_of_goods_sold',
+  'other_current_asset',
+  'other_expense',
+];
+
+const formatInventoryItemChoice = (item: InventoryItem, index: number) => {
+  const priceSegment = item.salesPrice ? ` - $${item.salesPrice}` : '';
+
+  return `${index + 1}. ${item.name || item.fullName} (ID: ${item.id})${priceSegment}`;
+};
+
+const formatInventoryItemLine = (item: InventoryItem, index: number) => {
+  const parts = [
+    `${index + 1}. ${item.name || item.fullName}`,
+    item.sku ? `SKU: ${item.sku}` : null,
+    item.salesPrice ? `Price: $${item.salesPrice}` : null,
+    item.quantityOnHand !== undefined
+      ? `Qty: ${item.quantityOnHand}`
+      : null,
+    `ID: ${item.id}`,
+  ].filter(Boolean);
+
+  return parts.join(' | ');
+};
 
 /**
  * Schema for chat message input
@@ -271,7 +304,8 @@ Examples:
       }
 
       const inventoryService = createInventoryService();
-      let result;
+      let result: unknown;
+      let listResult: InventoryItemsListResult | null = null;
 
       // Execute the operation
       switch (operation.operation) {
@@ -288,6 +322,7 @@ Examples:
             fetchAll: !operation.filters?.limit,
           });
 
+          listResult = items;
           result = items;
           break;
         }
@@ -314,17 +349,16 @@ Examples:
               }
 
               if (items.data.length > 1) {
+                const itemSummaries = items.data
+                  .map((item, idx) => formatInventoryItemChoice(item, idx))
+                  .join('\n');
+
                 return {
                   success: true,
                   data: items,
                   reply: `I found ${items.data.length} items matching "${operation.itemName}". Here they are:
 
-${items.data
-  .map(
-    (item: any, idx: number) =>
-      `${idx + 1}. ${item.name || item.fullName} (ID: ${item.id})${item.salesPrice ? ` - $${item.salesPrice}` : ''}`,
-  )
-  .join('\n')}
+${itemSummaries}
 
 Please specify the exact item ID to view details.`,
                   parsedOperation: operation,
@@ -415,17 +449,16 @@ ${operation.data?.sku ? `- SKU: ${operation.data.sku}` : ''}`,
             }
 
             if (items.data.length > 1) {
+              const itemSummaries = items.data
+                .map((item, idx) => formatInventoryItemChoice(item, idx))
+                .join('\n');
+
               return {
                 success: false,
                 error: 'Multiple items found',
                 reply: `I found ${items.data.length} items matching "${operation.itemName}". Please specify which one:
 
-${items.data
-  .map(
-    (item: any, idx: number) =>
-      `${idx + 1}. ${item.name || item.fullName} (ID: ${item.id})`,
-  )
-  .join('\n')}`,
+${itemSummaries}`,
                 parsedOperation: operation,
                 data: items,
               };
@@ -557,25 +590,15 @@ QUICKBOOKS_INVENTORY_ADJUSTMENT_ACCOUNT_ID=your_account_id_here`,
       let reply: string;
 
       // For list operations, format the response ourselves to show all items
-      if (operation.operation === 'list' && result?.data) {
-        const items = result.data;
+      if (operation.operation === 'list' && listResult) {
+        const items = listResult.data;
         const itemCount = items.length;
 
         if (itemCount === 0) {
           reply = 'No inventory items found matching your criteria.';
         } else {
           const itemList = items
-            .map((item: any, idx: number) => {
-              const parts = [
-                `${idx + 1}. ${item.name || item.fullName}`,
-                item.sku ? `SKU: ${item.sku}` : null,
-                item.salesPrice ? `Price: $${item.salesPrice}` : null,
-                item.quantityOnHand !== undefined ? `Qty: ${item.quantityOnHand}` : null,
-                `ID: ${item.id}`,
-              ].filter(Boolean);
-
-              return parts.join(' | ');
-            })
+            .map((item, idx) => formatInventoryItemLine(item, idx))
             .join('\n');
 
           reply = `Found ${itemCount} inventory item${itemCount > 1 ? 's' : ''}:\n\n${itemList}`;
@@ -631,26 +654,23 @@ export const listAccounts = enhanceAction(
     }
 
     const inventoryService = createInventoryService();
+    const accountsResponse = await inventoryService.listAccounts({
+      endUserId,
+      limit: 150,
+    });
 
-    try {
-      const accounts = await inventoryService.listAccounts({
-        endUserId,
-        limit: 150,
-      });
+    const allAccounts = accountsResponse.data ?? [];
+    const filteredAccounts = allAccounts.filter((account) =>
+      relevantAccountTypes.includes(account.accountType),
+    );
 
-      // Filter to show the most relevant account types for inventory
-      const relevantAccounts = accounts.data?.filter((account: any) =>
-        ['Income', 'Cost of Goods Sold', 'Other Current Asset', 'Other Expense'].includes(account.type)
-      );
+    const accountsToReturn = filteredAccounts.length > 0 ? filteredAccounts : allAccounts;
 
-      return {
-        success: true,
-        data: relevantAccounts || accounts.data,
-        message: `Found ${relevantAccounts?.length || accounts.data?.length} accounts. Look for:\n- Income accounts for sales revenue\n- COGS accounts for cost of goods sold\n- Asset accounts for inventory tracking\n- Expense accounts for inventory adjustments`,
-      };
-    } catch (error) {
-      throw error;
-    }
+    return {
+      success: true,
+      data: accountsToReturn,
+      message: `Found ${accountsToReturn.length} accounts. Look for:\n- Income accounts for sales revenue\n- COGS accounts for cost of goods sold\n- Asset accounts for inventory tracking\n- Expense accounts for inventory adjustments`,
+    };
   },
   {
     schema: z.object({}),

@@ -3,7 +3,6 @@ import { getLogger } from '@kit/shared/logger';
 import { NextResponse } from 'next/server';
 
 import { createConductorService } from '~/lib/quickbooks/conductor.service';
-import { HealthCheckSchema } from '~/lib/quickbooks/schemas';
 
 /**
  * @name GET
