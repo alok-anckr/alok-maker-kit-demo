@@ -96,12 +96,14 @@ export function ChatInputForm({ onSubmit, isLoading }: ChatInputFormProps) {
     fileInputRef.current?.click();
   };
 
+  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    form.handleSubmit(handleSubmit)(e);
+  };
+
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-2 p-4"
-      >
+      <form onSubmit={onFormSubmit} className="space-y-2 p-4">
         {selectedFile && (
           <div className="flex items-center gap-2 rounded-md border bg-muted p-2">
             <Upload className="h-4 w-4 text-muted-foreground" />
